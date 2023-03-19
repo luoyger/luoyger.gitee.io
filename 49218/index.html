@@ -1,0 +1,376 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"><title>Go栈内存管理 | Luoyger's Blog</title><meta name="author" content="Luoyger"><meta name="copyright" content="Luoyger"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="栈内存栈区的内存由编译器自动进行分配和释放，栈区中存储着函数的参数以及局部变量，它们会随着函数的创建而创建，函数的返回而销毁。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go栈内存管理">
+<meta property="og:url" content="https://www.happy2coding.com/49218/index.html">
+<meta property="og:site_name" content="Luoyger&#39;s Blog">
+<meta property="og:description" content="栈内存栈区的内存由编译器自动进行分配和释放，栈区中存储着函数的参数以及局部变量，它们会随着函数的创建而创建，函数的返回而销毁。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.happy2coding.com/assets/images/gzh-qr.png">
+<meta property="article:published_time" content="2023-02-10T21:08:12.000Z">
+<meta property="article:modified_time" content="2023-03-19T12:20:05.902Z">
+<meta property="article:author" content="Luoyger">
+<meta property="article:tag" content="栈内存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.happy2coding.com/assets/images/gzh-qr.png"><link rel="shortcut icon" href="/assets/images/logo.png"><link rel="canonical" href="https://www.happy2coding.com/49218/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?8a90e1b8495b546a9696b7ebab1201a5";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":400},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  }
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Go栈内存管理',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-03-19 12:20:05'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Luoyger's Blog" type="application/atom+xml">
+</head><body><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js/themes/blue/pace-theme-minimal.min.css"/><script src="https://cdn.jsdelivr.net/npm/pace-js/pace.min.js"></script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/assets/images/gzh-qr.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);" rel="external nofollow noreferrer"><i class="fa-fw fas fa-list"></i><span> 娱乐</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 相册</span></a></li><li><a class="site-page child" href="/bangumis/"><i class="fa-fw fab fa-youtube"></i><span> 番剧</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-film"></i><span> 电影</span></a></li><li><a class="site-page child" href="/games/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏</span></a></li><li><a class="site-page child" href="/books/"><i class="fa-fw fas fa-book"></i><span> 书籍</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-link"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url('/assets/images/img_8.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Luoyger's Blog"><img class="site-icon" src="/assets/images/logo.png"/><span class="site-name">Luoyger's Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);" rel="external nofollow noreferrer"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);" rel="external nofollow noreferrer"><i class="fa-fw fas fa-list"></i><span> 娱乐</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 相册</span></a></li><li><a class="site-page child" href="/bangumis/"><i class="fa-fw fab fa-youtube"></i><span> 番剧</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-film"></i><span> 电影</span></a></li><li><a class="site-page child" href="/games/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏</span></a></li><li><a class="site-page child" href="/books/"><i class="fa-fw fas fa-book"></i><span> 书籍</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-link"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" rel="external nofollow noreferrer"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Go栈内存管理</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-02-10T21:08:12.000Z" title="发表于 2023-02-10 21:08:12">2023-02-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-03-19T12:20:05.902Z" title="更新于 2023-03-19 12:20:05">2023-03-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Golang/">Golang</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Go栈内存管理"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/49218/#post-comment" itemprop="discussionUrl"><span class="valine-comment-count" data-xid="/49218/" itemprop="commentCount"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="栈内存"><a href="#栈内存" class="headerlink" title="栈内存"></a>栈内存</h1><p>栈区的内存由编译器自动进行分配和释放，栈区中存储着函数的参数以及局部变量，它们会随着函数的创建而创建，函数的返回而销毁。</p>
+<span id="more"></span>
+<p>每个<code>goroutine</code>都维护着一个自己的栈区，这个栈区只能自己使用不能被其他<code>goroutine</code>使用。栈区的初始大小是2KB.</p>
+<p>栈内存空间、结构和初始大小经过了几个版本的更迭</p>
+<ul>
+<li>v1.0 ~ v1.1 : 最小栈内存空间为4KB；</li>
+<li>v1.2 : 将最小栈内存提升到了8KB；</li>
+<li>v1.3 : 使用连续栈替换之前版本的分段栈；</li>
+<li>v1.4 ~ v1.19 : 将最小栈内存降低到了2KB；</li>
+</ul>
+<p>栈结构经过了分段栈到连续栈的发展过程，介绍如下。</p>
+<h2 id="分段栈"><a href="#分段栈" class="headerlink" title="分段栈"></a>分段栈</h2><p>随着<code>goroutine</code>调用的函数层级的深入或者局部变量需要的越来越多时，运行时会调用<code>runtime.morestack</code>和<code>runtime.newstack</code> 创建一个新的栈空间，这些栈空间是不连续的，但是当前<code>goroutine</code>的多个栈空间会以双向链表的形式串联起来，运行时会通过指针找到连续的栈片段。 如下图所示。</p>
+<p><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/%E5%9B%BE%E7%89%8711.jpg" alt="image"></p>
+<p>优点：<br>按需为当前<code>goroutine</code>分配内存并且及时减少内存的占用。</p>
+<p>缺点：<br>如果当前<code>goroutine</code>的栈几乎充满，那么任意的函数调用都会触发栈的扩容，当函数返回后又会触发栈的收缩，如果在一个循环中调用函数，栈的分配和释放就会造成巨大的额外开销，这被称为热分裂问题（Hot split）。</p>
+<p>为了解决这个问题，Go在1.2版本的时候不得不将栈的初始化内存从4KB增大到了8KB。</p>
+<h2 id="连续栈"><a href="#连续栈" class="headerlink" title="连续栈"></a>连续栈</h2><p>连续栈可以解决分段栈中存在的两个问题，其核心原理就是每当程序的栈空间不足时，初始化一片比旧栈大两倍的新栈并将原栈中的所有值都迁移到新的栈中，新的局部变量或者函数调用就有了充足的内存空间。</p>
+<p><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/%E5%9B%BE%E7%89%8712.jpg" alt="image"></p>
+<p>栈空间不足导致的扩容会经历以下几个步骤：</p>
+<ol>
+<li>调用用<code>runtime.newstack</code>在内存空间中分配更大的栈内存空间；</li>
+<li>使用<code>runtime.copystack</code>将旧栈中的所有内容复制到新的栈中；</li>
+<li>将指向旧栈对应变量的指针重新指向新栈；</li>
+<li>调用<code>runtime.stackfree</code>销毁并回收旧栈的内存空间；</li>
+</ol>
+<h2 id="栈管理"><a href="#栈管理" class="headerlink" title="栈管理"></a>栈管理</h2><p><code>Span</code>除了用作堆内存分配外，也用于栈内存分配，只是用途不同的<code>Span</code>对应的<code>mSpan</code>状态不同。用做堆内存的<code>mSpan</code>状态为<code>mSpanInUse</code>，而用做栈内存的状态为<code>mSpanManual</code>。</p>
+<p>栈空间在运行时中包含两个重要的全局变量，分别是<code>runtime.stackpool</code>和<code>runtime.stackLarge</code>，这两个变量分别表示全局的栈缓存和大栈缓存，前者可以分配小于 32KB 的内存，后者用来分配大于 32KB 的栈空间。</p>
+<p>为提高栈内存分配效率，调度器初始化时会初始化两个用于栈分配的全局对象：stackpool 和stackLarge，介绍如下。</p>
+<h3 id="StackPool"><a href="#StackPool" class="headerlink" title="StackPool"></a>StackPool</h3><p><code>stackpool</code>面向32KB以下的栈分配，栈大小必须是2的幂，最小2KB，在Linux环境下，<code>stackpool</code>提供了2kB、4KB、8KB、16KB四种规格的<code>mSpan</code>链表。</p>
+<p><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/%E5%9B%BE%E7%89%8713.png" alt="image"></p>
+<p><code>stackpool</code>结构定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Global pool of spans that have free stacks.</span></span><br><span class="line"><span class="comment">// Stacks are assigned an order according to size.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//	order = log_2(size/FixedStack)</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// There is a free list for each order.</span></span><br><span class="line"><span class="keyword">var</span> stackpool [_NumStackOrders]<span class="keyword">struct</span> &#123;</span><br><span class="line">	item stackpoolItem</span><br><span class="line">	_    [cpu.CacheLinePadSize - unsafe.Sizeof(stackpoolItem&#123;&#125;)%cpu.CacheLinePadSize]<span class="type">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//go:notinheap</span></span><br><span class="line"><span class="keyword">type</span> stackpoolItem <span class="keyword">struct</span> &#123;</span><br><span class="line">	mu   mutex</span><br><span class="line">	span mSpanList</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// mSpanList heads a linked list of spans.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//go:notinheap</span></span><br><span class="line"><span class="keyword">type</span> mSpanList <span class="keyword">struct</span> &#123;</span><br><span class="line">	first *mspan <span class="comment">// first span in list, or nil if none</span></span><br><span class="line">	last  *mspan <span class="comment">// last span in list, or nil if none</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="StackLarge"><a href="#StackLarge" class="headerlink" title="StackLarge"></a>StackLarge</h3><p>大于等于32KB的栈，由<code>stackLarge</code>来分配，这也是个<code>mSpan</code>链表的数组，长度为25。<code>mSpan</code>规格从8KB开始，之后每个链表的<code>mSpan</code>规格都是前一个的两倍。</p>
+<p><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/%E5%9B%BE%E7%89%8714.png" alt="image"></p>
+<p>8KB和16KB这两个链表，实际上会一直是空的，留着它们是为了方便使用<code>mSpan</code>包含页面数的（以2为底）对数作为数组下标。</p>
+<p><code>stackLarge</code>结构定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Global pool of large stack spans.</span></span><br><span class="line"><span class="keyword">var</span> stackLarge <span class="keyword">struct</span> &#123;</span><br><span class="line">	lock mutex</span><br><span class="line">	free [heapAddrBits - pageShift]mSpanList <span class="comment">// free lists by log_2(s.npages)</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// mSpanList heads a linked list of spans.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//go:notinheap</span></span><br><span class="line"><span class="keyword">type</span> mSpanList <span class="keyword">struct</span> &#123;</span><br><span class="line">	first *mspan <span class="comment">// first span in list, or nil if none</span></span><br><span class="line">	last  *mspan <span class="comment">// last span in list, or nil if none</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="内存分配"><a href="#内存分配" class="headerlink" title="内存分配"></a>内存分配</h3><p>如果运行时只使用全局变量来分配内存的话，势必会造成线程之间的锁竞争进而影响程序的执行效率，栈内存由于与线程关系比较密切，所以在每一个线程缓存<code>runtime.mcache</code>中都加入了栈缓存减少锁竞争影响。</p>
+<p>同堆内存分配一样，每个P也有用于栈分配的本地缓存(<code>mcache.stackcache</code>)，这相当于是<code>stackpool</code>的本地缓存，在<code>mcache</code>中的定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//go:notinheap</span></span><br><span class="line"><span class="keyword">type</span> mcache <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// The following members are accessed on every malloc,</span></span><br><span class="line">	<span class="comment">// so they are grouped here for better caching.</span></span><br><span class="line">	nextSample <span class="type">uintptr</span> <span class="comment">// trigger heap sample after allocating this many bytes</span></span><br><span class="line">	scanAlloc  <span class="type">uintptr</span> <span class="comment">// bytes of scannable heap allocated</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Allocator cache for tiny objects w/o pointers.</span></span><br><span class="line">	<span class="comment">// See &quot;Tiny allocator&quot; comment in malloc.go.</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// tiny points to the beginning of the current tiny block, or</span></span><br><span class="line">	<span class="comment">// nil if there is no current tiny block.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// tiny is a heap pointer. Since mcache is in non-GC&#x27;d memory,</span></span><br><span class="line">	<span class="comment">// we handle it by clearing it in releaseAll during mark</span></span><br><span class="line">	<span class="comment">// termination.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// tinyAllocs is the number of tiny allocations performed</span></span><br><span class="line">	<span class="comment">// by the P that owns this mcache.</span></span><br><span class="line">	tiny       <span class="type">uintptr</span></span><br><span class="line">	tinyoffset <span class="type">uintptr</span></span><br><span class="line">	tinyAllocs <span class="type">uintptr</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// The rest is not accessed on every malloc.</span></span><br><span class="line"></span><br><span class="line">	alloc [numSpanClasses]*mspan <span class="comment">// spans to allocate from, indexed by spanClass</span></span><br><span class="line"></span><br><span class="line">	stackcache [_NumStackOrders]stackfreelist</span><br><span class="line"></span><br><span class="line">	<span class="comment">// flushGen indicates the sweepgen during which this mcache</span></span><br><span class="line">	<span class="comment">// was last flushed. If flushGen != mheap_.sweepgen, the spans</span></span><br><span class="line">	<span class="comment">// in this mcache are stale and need to the flushed so they</span></span><br><span class="line">	<span class="comment">// can be swept. This is done in acquirep.</span></span><br><span class="line">	flushGen <span class="type">uint32</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>stackcache [_NumStackOrders]stackfreelist</code>即为栈的本地缓存，在Linux环境下，每个P本地缓存有4（<code>_NumStackOrders</code>）种规格的空闲内存块链表：2KB，4KB，8KB，16KB，定义如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Number of orders that get caching. Order 0 is FixedStack</span></span><br><span class="line"><span class="comment">// and each successive order is twice as large.</span></span><br><span class="line"><span class="comment">// We want to cache 2KB, 4KB, 8KB, and 16KB stacks. Larger stacks</span></span><br><span class="line"><span class="comment">// will be allocated directly.</span></span><br><span class="line"><span class="comment">// Since FixedStack is different on different systems, we</span></span><br><span class="line"><span class="comment">// must vary NumStackOrders to keep the same maximum cached size.</span></span><br><span class="line"><span class="comment">//   OS               | FixedStack | NumStackOrders</span></span><br><span class="line"><span class="comment">//   -----------------+------------+---------------</span></span><br><span class="line"><span class="comment">//   linux/darwin/bsd | 2KB        | 4</span></span><br><span class="line"><span class="comment">//   windows/32       | 4KB        | 3</span></span><br><span class="line"><span class="comment">//   windows/64       | 8KB        | 2</span></span><br><span class="line"><span class="comment">//   plan9            | 4KB        | 3</span></span><br><span class="line">_NumStackOrders = <span class="number">4</span> - goarch.PtrSize/<span class="number">4</span>*goos.IsWindows - <span class="number">1</span>*goos.IsPlan9</span><br></pre></td></tr></table></figure>
+
+
+<p><strong>小于32KB的栈分配</strong>：</p>
+<ul>
+<li>对于小于32KB的栈空间，会优先使用当前P的本地缓存。</li>
+<li>如果本地缓存中，对应规格的内存块链表为空，就从stackpool这里分配16KB的内存放到本地缓存（<code>stackcache</code>）中，然后继续从本地缓存分配。</li>
+<li>若是<code>stackpool</code>中对应链表也为空，就从堆内存直接分配一个32KB的<code>span</code>划分成对应的内存块大小放到<code>stackpool</code>中。不过有些情况下，是无法使用本地缓存的，在不能使用本地缓存的情况下，就直接从<code>stackpool</code>分配。</li>
+</ul>
+<p><strong>大于等于32KB的栈分配：</strong></p>
+<ul>
+<li>计算需要的page数目，并以2为底求对数（log2page），将得到的结果作为stackLarge数组的下标，找到对应的空闲<code>mSpan</code>链表。</li>
+<li>若链表不为空，就拿一个过来用。如果链表为空，就直接从堆内存分配一个拥有这么多个页面的span，并把它整个用于分配栈内存；</li>
+<li>例如想要分配64KB的栈，68&#x2F;8是8个page，log2page&#x3D;log2(8)&#x3D;3</li>
+</ul>
+<h3 id="内存释放"><a href="#内存释放" class="headerlink" title="内存释放"></a>内存释放</h3><p>什么时候释放栈？</p>
+<ul>
+<li>如果协程栈没有增长过（还是2KB），就把这个协程放到有栈的空闲G队列中；</li>
+<li>如果协程栈增长过，就把协程栈释放掉，再把协程放入到没有栈的空闲G队列中。而这些空闲协程的栈，也会在GC执行<code>markroot</code>时被释放掉，到时候这些协程也会加入到没有栈的空闲协程队列中。<br><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/pic19.png" alt="image"><br>所以，常规<code>goroutine</code>栈的释放，一是发生在协程运行结束时，gfput会把增长过的栈释放掉，栈没有增长过的g会被放入<code>sched.gFree.stack</code>中；二是GC会处理<code>sched.gFree.stack</code>链表，把这里面所有g的栈都释放掉，然后把它们放入<code>sched.gFree.noStack</code>链表中。</li>
+</ul>
+<p>协程栈释放时是放回当前P的本地缓存？还是放回全局栈缓存？还是直接还给堆内存？</p>
+<ul>
+<li>其实都有可能，要视情况而定，同栈分配时一样，小于32KB和大于等于32KB的栈，在释放的时候也会区别对待。</li>
+<li>小于32KB的栈，释放时会先放回到本地缓存中。如果本地缓存对应链表中栈空间总和大于32KB了，就把一部分放回<code>stackpool</code>中，本地这个链表只保留16KB。如果本地缓存不可用，也会直接放回<code>stackpool</code>中。而且，如果发现这个<code>mSpan</code>中所有内存块都被释放了，就会把它归还给堆内存。</li>
+<li>对于大于等于32KB的栈释放，如果当前处在GC清理阶段（<code>gcphase==_GCoff</code>），就直接释放到堆内存，否则就先把它放回StackLarge这里。</li>
+</ul>
+<h3 id="栈扩容"><a href="#栈扩容" class="headerlink" title="栈扩容"></a>栈扩容</h3><p>在<code>goroutine</code>运行的时候栈区会按照需要增长和收缩，占用的内存最大限制的默认值在64位系统上是1GB。栈大小的初始值和上限这部分的设置都可以在Go的源码<code>runtime/stack.go</code>查看。<br><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/pic20.png" alt="image"><br>扩容流程</p>
+<ul>
+<li>编译器会为函数调用插入运行时检查<code>runtime.morestack</code>，它会在几乎所有的函数调用之前检查当前<code>goroutine</code>的栈内存是否充足，如果当前栈需要扩容，会调用<code>runtime.newstack</code>创建新的栈 。</li>
+<li>旧栈的大小是通过我们上面说的保存在<code>goroutine</code>中的<code>stack</code>信息里记录的栈区内存边界计算出来的，然后用旧栈两倍的大小创建新栈，创建前会检查是新栈的大小是否超过了单个栈的内存上限。</li>
+<li>整个过程中最复杂的地方是将指向源栈中内存的指针调整为指向新的栈，这一步完成后就会释放掉旧栈的内存空间了</li>
+</ul>
+<h3 id="栈缩容"><a href="#栈缩容" class="headerlink" title="栈缩容"></a>栈缩容</h3><p>在<code>goroutine</code>运行的过程中，如果栈区的空间使用率不超过1&#x2F;4，那么在垃圾回收的时候使用<code>runtime.shrinkstack</code>进行栈缩容，当然进行缩容前会执行一堆前置检查，都通过了才会进行缩容。<br><img src="https://image-1306104315.cos.ap-guangzhou.myqcloud.com/blog/pic21.png" alt="image"><br>缩容流程</p>
+<ul>
+<li>如果要触发栈的缩容，新栈的大小会是原始栈的一半，如果新栈的大小低于程序的最低限制 2KB，那么缩容的过程就会停止。</li>
+<li>缩容也会调用扩容时使用的<code>runtime.copystack</code>函数开辟新的栈空间，将旧栈的数据拷贝到新栈以及调整原来指针的指向。</li>
+</ul>
+<p>唯一发起栈收缩的地方就是 GC。GC通过<code>scanstack</code>函数寻找标记root节点时，如果发现可以安全的收缩栈，就会执行栈收缩，不能马上执行时，就设置栈收缩标识（<code>g.preemptShrink = true</code>），等到协程检测到抢占标识（<code>stackPreempt</code>）。在让出CPU之前会检查这个栈收缩标识，为true的话就会先进行栈收缩，再让出CPU。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener external nofollow noreferrer" href="https://blog.csdn.net/weixin_52690231/article/details/124476954">https://blog.csdn.net/weixin_52690231/article/details/124476954</a><br><a target="_blank" rel="noopener external nofollow noreferrer" href="https://zhuanlan.zhihu.com/p/237870981">https://zhuanlan.zhihu.com/p/237870981</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.happy2coding.com">Luoyger</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.happy2coding.com/49218/">https://www.happy2coding.com/49218/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow noreferrer" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.happy2coding.com" target="_blank">Luoyger's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%A0%88%E5%86%85%E5%AD%98/">栈内存</a></div><div class="post_share"><div class="social-share" data-image="/assets/images/gzh-qr.png" data-sites="wechat,weibo,qq,facebook,twitter"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/assets/images/wechatpay-min.png" target="_blank"><img class="post-qr-code-img" src="/assets/images/wechatpay-min.png" alt="微信支付"/></a><div class="post-qr-code-desc">微信支付</div></li><li class="reward-item"><a href="/assets/images/alipay-min.png" target="_blank"><img class="post-qr-code-img" src="/assets/images/alipay-min.png" alt="支付宝支付"/></a><div class="post-qr-code-desc">支付宝支付</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/55755/" title="十分钟带你入门向量检索技术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">十分钟带你入门向量检索技术</div></div></a></div><div class="next-post pull-right"><a href="/45094/" title="Go栈内存不足逃逸分析"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Go栈内存不足逃逸分析</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/45094/" title="Go栈内存不足逃逸分析"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-03-01</div><div class="title">Go栈内存不足逃逸分析</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Valine</span><span class="switch-btn"></span><span class="second-comment">Disqus</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/assets/images/gzh-qr.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Luoyger</div><div class="author-info__description">喜欢折腾技术的开发爱好者。</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener external nofollow noreferrer" href="https://github.com/luoyger"><i class="fab fa-github"></i><span>微信扫描上面公众号关注我</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/luoyger" rel="external nofollow noreferrer" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:739052349@qq.com" rel="external nofollow noreferrer" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="RSS"><i class="fas fa-rss"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎访问我的博客，有任何建议都可以在<a href="messageboard/" style="color:orange">留言板</a>或者<b style="color:green">邮箱</b>留言，当然也可以在网页右下角的<b style="color:blue">在线聊天</b>联系我。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A0%88%E5%86%85%E5%AD%98"><span class="toc-number">1.</span> <span class="toc-text">栈内存</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E6%AE%B5%E6%A0%88"><span class="toc-number">1.1.</span> <span class="toc-text">分段栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9E%E7%BB%AD%E6%A0%88"><span class="toc-number">1.2.</span> <span class="toc-text">连续栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%88%E7%AE%A1%E7%90%86"><span class="toc-number">1.3.</span> <span class="toc-text">栈管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#StackPool"><span class="toc-number">1.3.1.</span> <span class="toc-text">StackPool</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#StackLarge"><span class="toc-number">1.3.2.</span> <span class="toc-text">StackLarge</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D"><span class="toc-number">1.3.3.</span> <span class="toc-text">内存分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE"><span class="toc-number">1.3.4.</span> <span class="toc-text">内存释放</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E6%89%A9%E5%AE%B9"><span class="toc-number">1.3.5.</span> <span class="toc-text">栈扩容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E7%BC%A9%E5%AE%B9"><span class="toc-number">1.3.6.</span> <span class="toc-text">栈缩容</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">2.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/45094/" title="Go栈内存不足逃逸分析">Go栈内存不足逃逸分析</a><time datetime="2023-03-01T20:03:49.000Z" title="发表于 2023-03-01 20:03:49">2023-03-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/49218/" title="Go栈内存管理">Go栈内存管理</a><time datetime="2023-02-10T21:08:12.000Z" title="发表于 2023-02-10 21:08:12">2023-02-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/55755/" title="十分钟带你入门向量检索技术">十分钟带你入门向量检索技术</a><time datetime="2023-01-21T16:18:44.000Z" title="发表于 2023-01-21 16:18:44">2023-01-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/64241/" title="快速入门Golang Fuzz模糊测试">快速入门Golang Fuzz模糊测试</a><time datetime="2023-01-01T20:20:19.000Z" title="发表于 2023-01-01 20:20:19">2023-01-01</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('/assets/images/img_2.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2023 By Luoyger</div><!--if theme.footer.copyright--><!--  .framework-info--><!--    span= _p('footer.framework') + ' '--><!--    a(href='https://hexo.io')= 'Hexo'--><!--    span.footer-separator |--><!--    span= _p('footer.theme') + ' '--><!--    a(href='https://github.com/jerryc127/hexo-theme-butterfly')= 'Butterfly'--><div class="footer_custom_text"><a target="_blank" rel="noopener external nofollow noreferrer" href="https://beian.miit.gov.cn/"><img class="icp-icon" src="/assets/images/icp.png" style="width:22px;"><span>粤ICP备2022072681号</span></a></div><a target="_blank" rel="noopener external nofollow noreferrer" href="https://hexo.io/zh-cn/" alt="博客框架为Hexo_v5.3.0"><img src="https://img.shields.io/badge/Frame-Hexo-orange?style=flat&logo=hexo"></img></a>
+<a target="_blank" rel="noopener external nofollow noreferrer" href="https://butterfly.js.org/"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&logo=bitdefender"></img></a>
+<a target="_blank" rel="noopener external nofollow noreferrer" href="https://github.com/luoyger/luoyger"><img src="https://img.shields.io/badge/Source-Github-blue?style=flat&logo=github"></img></a>
+<a target="_blank" rel="noopener external nofollow noreferrer" href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&logo=Claris"></img></a></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="聊天"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><div class="js-pjax"><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'usylbOffOujz6JDbYzj2qErY-gzGzoHsz',
+      appKey: '2zAWmFC12iSNaNbTA0holTS2',
+      avatar: 'monsterid',
+      serverURLs: 'https://usylboff.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, {"placeholder":"欢迎多多留言讨论。"}))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !false) {
+  if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://www.happy2coding.com/49218/'
+    this.page.identifier = '/49218/'
+    this.page.title = 'Go栈内存管理'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://luoyger.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Valine' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-fluttering-ribbon.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script>window.$crisp = [];
+window.CRISP_WEBSITE_ID = "d5a481e6-df57-43b6-bc46-c10a47b9b9d1";
+(function () {
+  d = document;
+  s = d.createElement("script");
+  s.src = "https://client.crisp.chat/l.js";
+  s.async = 1;
+  d.getElementsByTagName("head")[0].appendChild(s);
+})();
+$crisp.push(["safe", true])
+
+if (true) {
+  $crisp.push(["do", "chat:hide"])
+  $crisp.push(["on", "chat:closed", function() {
+    $crisp.push(["do", "chat:hide"])
+  }])
+  var chatBtnFn = () => {
+    var chatBtn = document.getElementById("chat_btn")
+    chatBtn.addEventListener("click", function(){
+      $crisp.push(["do", "chat:show"])
+      $crisp.push(["do", "chat:open"])
+
+    });
+  }
+  chatBtnFn()
+} else {
+  if (true) {
+    function chatBtnHide () {
+      $crisp.push(["do", "chat:hide"])
+    }
+    function chatBtnShow () {
+      $crisp.push(["do", "chat:show"])
+    }
+  }
+}</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></body></html>
